@@ -1,0 +1,24 @@
+{
+  "name": "PEAK TCP Server",
+  "author": "Bryan Turek",
+  "debug": true,
+  "port": "8050",
+  "version": "0.1",
+  "databases": 
+  [
+    {
+      "type": "mysql",
+      "host": "localhost",
+      "user": "peakadmin",
+      "pass": "bluemoon123",
+      "name": "peakdb"
+    }
+  ],
+  "applications": 
+  [
+    "light",
+    "temperature",
+    "audio"
+  ],
+  "logs": "./server.log"
+}
