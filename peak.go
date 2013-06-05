@@ -2,7 +2,7 @@
   PEAK TCP Server
   Author: Bryan Turek
 */
-package main
+package server
 
 import (
   "net"
@@ -32,6 +32,7 @@ type ConfigType struct {
   Version string
   Databases []Database
   Applications []string
+  Locations []string
   Log string
 }
 
@@ -91,9 +92,11 @@ func ReadData(conn net.Conn) {
 		return
 	}
 	println("received ", n, " bytes of data =", string(buf))
+  
+  //response, err := Command.execute(buf)
  
 	//send reply
-	_, err = conn.Write(buf)
+  _, err := conn.Write(buf)
 	if err != nil {
 		log.Printf("Error send reply:", err.Error())
 	}else {

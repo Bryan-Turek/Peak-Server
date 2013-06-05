@@ -20,5 +20,11 @@
     "temperature",
     "audio"
   ],
+  "locations":
+  [
+    "kitchen",
+    "living room",
+    "bedroom"
+  ],
   "logs": "./server.log"
 }
