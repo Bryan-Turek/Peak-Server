@@ -10,7 +10,7 @@
       "type": "mysql",
       "host": "localhost",
       "user": "peakadmin",
-      "pass": "bluemoon123",
+      "pass": "testing123",
       "name": "peakdb"
     }
   ],
