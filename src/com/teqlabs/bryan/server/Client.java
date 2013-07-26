@@ -6,9 +6,12 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import com.google.gson.Gson;
 import com.teqlabs.bryan.OmniLinkII.OmniLinkII;
+import com.teqlabs.bryan.commands.CommandCore;
 
 import net.homeip.mleclerc.omnilink.messagebase.ReplyMessage;
+import net.xeoh.plugins.base.Plugin;
 import net.xeoh.plugins.base.PluginManager;
 
 public class Client implements Runnable {
@@ -18,7 +21,7 @@ public class Client implements Runnable {
 	private BufferedInputStream incoming = null;
 	private BufferedOutputStream outgoing = null;
 	private PluginManager pluginManager = null;
-//	private CommandCore commands = new CommandCore();
+	private CommandCore commands = new CommandCore();
 	
 	Client(ServerSocket ss, int recvBufLen, PluginManager pluginManager) throws IOException {
 		this.conn = ss.accept();
@@ -28,8 +31,12 @@ public class Client implements Runnable {
 		this.pluginManager = pluginManager;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
+		
+		Gson gson = new Gson();
+		
 		try {
 			
 			//While client is sending
@@ -38,16 +45,17 @@ public class Client implements Runnable {
 				//Read input stream
 				byte[] bytes = readInputStream();
 				if (bytes == null)
-					break;
+					break;	
 				
 				//Create command string
-				String command = new String(bytes, "UTF8");
+				String json = new String(bytes, "UTF8");
+				Message message = gson.fromJson(json, Message.class);
 				
-				OmniLinkII omni = pluginManager.getPlugin(OmniLinkII.class);
+				Plugin plugin = pluginManager.getPlugin(commands.find(message.getNode()));
 				try {
-					ReplyMessage reply = omni.executeCommand(command);
-					System.out.println(command);
-					System.out.println(reply);
+					((OmniLinkII) plugin).executeCommand(message.getCommand());
+					//System.out.println(command);
+					//System.out.println(reply);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
