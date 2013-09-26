@@ -5,13 +5,13 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.logging.Logger;
 
-import com.google.gson.Gson;
-import com.teqlabs.bryan.OmniLinkII.OmniLinkII;
+import com.teqlabs.bryan.commands.Command;
 import com.teqlabs.bryan.commands.CommandCore;
+import com.teqlabs.bryan.commands.CommandThread;
 
-import net.homeip.mleclerc.omnilink.messagebase.ReplyMessage;
-import net.xeoh.plugins.base.Plugin;
+//import net.homeip.mleclerc.omnilink.messagebase.ReplyMessage;
 import net.xeoh.plugins.base.PluginManager;
 
 public class Client implements Runnable {
@@ -22,20 +22,19 @@ public class Client implements Runnable {
 	private BufferedOutputStream outgoing = null;
 	private PluginManager pluginManager = null;
 	private CommandCore commands = new CommandCore();
+	private Logger Log;
 	
-	Client(ServerSocket ss, int recvBufLen, PluginManager pluginManager) throws IOException {
+	Client(ServerSocket ss, int recvBufLen, PluginManager pluginManager, Logger log) throws IOException {
 		this.conn = ss.accept();
 		this.accepting = true;
 		this.incoming = new BufferedInputStream(conn.getInputStream());
 		this.outgoing = new BufferedOutputStream(conn.getOutputStream());
 		this.pluginManager = pluginManager;
+		this.Log = log;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
-		
-		Gson gson = new Gson();
 		
 		try {
 			
@@ -49,13 +48,10 @@ public class Client implements Runnable {
 				
 				//Create command string
 				String json = new String(bytes, "UTF8");
-				Message message = gson.fromJson(json, Message.class);
+				Command command = new Command(json, commands, pluginManager, Log);
 				
-				Plugin plugin = pluginManager.getPlugin(commands.find(message.getNode()));
 				try {
-					((OmniLinkII) plugin).executeCommand(message.getCommand());
-					//System.out.println(command);
-					//System.out.println(reply);
+					(new CommandThread(command)).start();
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -70,7 +66,7 @@ public class Client implements Runnable {
 	}
 	
 	public void close() throws IOException {
-		System.out.println("Connection to client closed.");
+		Log.info("Connection to client closed.");
 		this.conn.close();
 	}
 	
@@ -100,10 +96,10 @@ public class Client implements Runnable {
 		
 		//Check if incoming key matches our authentication string
 		if(authentication.equals(new String(bytes, "UTF8"))) {
-			System.out.println("Client authenticated successfully!");
+			Log.info("Client authenticated successfully!");
 			this.accepting = true;
 		} else {
-			System.out.println("Client failed to authenticate!");
+			Log.info("Client failed to authenticate!");
 			this.accepting = false;
 		}
 		
