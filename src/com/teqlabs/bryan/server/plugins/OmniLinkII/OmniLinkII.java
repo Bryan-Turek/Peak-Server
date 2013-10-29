@@ -10,5 +10,6 @@ public interface OmniLinkII extends net.xeoh.plugins.base.Plugin {
 	String execute(Map o) throws Exception;
 	@SuppressWarnings("rawtypes")
 	Map getCommands();
+	void resetConnection();
 }
 

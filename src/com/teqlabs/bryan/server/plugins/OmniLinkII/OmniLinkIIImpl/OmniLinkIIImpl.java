@@ -2,6 +2,7 @@ package com.teqlabs.bryan.server.plugins.OmniLinkII.OmniLinkIIImpl;
 
 import java.util.Map;
 
+//import com.teqlabs.bryan.commands.CommandThread;
 import com.teqlabs.bryan.server.plugins.OmniLinkII.OmniLinkII;
 
 import net.xeoh.plugins.base.annotations.PluginImplementation;
@@ -32,6 +33,7 @@ public class OmniLinkIIImpl implements OmniLinkII {
 	private final static String PRIVATE_KEY = "a0-4e-e0-2b-4e-9f-9a-e1-04-81-1f-dc-e4-4f-e0-bf";
 	private final static ProtocolTypeEnum PROTOCOL_TYPE = ProtocolTypeEnum.HAI_OMNI_LINK_II; // or ProtocolTypeEnum.HAI_OMNI_LINK_II for Omni-Link II
 
+	@SuppressWarnings("unused")
 	@Init
 	public void init() {
 		
@@ -47,11 +49,18 @@ public class OmniLinkIIImpl implements OmniLinkII {
 			}
 			
 			//Open communication session
-			open();
+			comm.open();
 			
 			//Enable notifications
 			ReplyMessage notifications = comm.execute(new NotificationsCommand(true));
-			System.out.println(notifications);
+			
+			//Enable polling
+			try {
+				(new PollingThread(comm)).start();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		
 			//Plugin initialized
 			System.out.println(PLUGIN_NAME + "Plugin initialized.");
@@ -66,24 +75,18 @@ public class OmniLinkIIImpl implements OmniLinkII {
 		}
 		
 	}
-
-	private void open() throws CommunicationException, Exception {
-		this.comm.open();
-	}
 	
 	@SuppressWarnings("rawtypes")
 	@Override
 	public String execute(Map o) throws Exception {
 		
         RequestMessage msg = commandManager.createRequestMessage(o);
-        if (msg != null && comm.isOpen())
+        if (msg != null)
         {
         	ReplyMessage reply = comm.execute(msg);
             return reply.toString();
-        } else if(!comm.isOpen()) {
-        	open();
-        	execute(o);
         }
+        
 		return null;
 		
 	}
@@ -92,6 +95,39 @@ public class OmniLinkIIImpl implements OmniLinkII {
 	@Override
 	public Map getCommands() {
 		return this.commandManager.getCommands();
+	}
+
+	@SuppressWarnings("unused")
+	@Override
+	public void resetConnection() {
+		try {
+			this.comm.close();
+			this.comm = null;
+			this.comm = new NetworkCommunication(SYSTEM_TYPE, IP_ADDRESS, PORT, 0, PRIVATE_KEY, PROTOCOL_TYPE);
+			if (PROTOCOL_TYPE == ProtocolTypeEnum.HAI_OMNI_LINK_II) {
+				// Register a listener to receive notifications from the controller
+				((NetworkCommunication) comm).addListener(new NetworkCommunication.NotificationListener() {
+					public void notify(Message notification) {
+						System.out.println("Notification: " + notification);
+					}
+				});
+			}
+			
+			//Open communication session
+			comm.open();
+			
+			//Enable notifications
+			ReplyMessage notifications = comm.execute(new NotificationsCommand(true));
+			
+		} catch (CommunicationException ce) {
+			// TODO Auto-generated catch block
+			System.err.println("Could not open " + PLUGIN_NAME + " communication session");
+			ce.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 }

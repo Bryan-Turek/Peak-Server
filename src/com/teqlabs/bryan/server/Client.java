@@ -44,7 +44,7 @@ public class Client implements Runnable {
 				//Read input stream
 				byte[] bytes = readInputStream();
 				if (bytes == null)
-					break;	
+					break;
 				
 				//Create command string
 				String json = new String(bytes, "UTF8");
